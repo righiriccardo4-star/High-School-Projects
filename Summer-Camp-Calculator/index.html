@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Summer Camp Registration</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    fieldset { width: 400px; padding: 20px; border-radius: 8px; border: 1px solid #ccc; }
+    input[type="text"] { width: 100%; padding: 5px; box-sizing: border-box; }
+    .status-msg { padding: 10px; border-radius: 4px; margin-top: 10px; display: none; }
+    button { padding: 8px 15px; margin-top: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<fieldset>
+  <legend><strong>Summer Camp Registration</strong></legend>
+
+  <label for="children">Total number of children*:</label><br>
+  <input id="children" type="text"><br><br>
+
+  <label for="under6">Of which under 6 years old* (75% discount):</label><br>
+  <input id="under6" type="text"><br><br>
+
+  <label for="weeks">Number of weeks*:</label><br>
+  <input id="weeks" type="text"><br><br>
+
+  <label><strong>Package Option:</strong></label><br>
+  <input type="radio" name="packageOption" value="40" checked> Base (€40)<br>
+  <input type="radio" name="packageOption" value="50"> Sport (€50)<br>
+  <input type="radio" name="packageOption" value="75"> Languages (€75)<br>
+  <input type="radio" name="packageOption" value="100"> Premium (€100)<br><br>
+
+  <label><strong>Catering Service:</strong></label><br>
+  <input type="radio" name="catering" value="0" checked> No catering<br>
+  <input type="radio" name="catering" value="35"> Lunch (+€35)<br>
+  <input type="radio" name="catering" value="60"> Lunch & Snacks (+€60)<br><br>
+
+  <label><strong>Extra Activities:</strong></label><br>
+  <input type="radio" name="extraActivity" value="25" checked> Art Workshop (+€25)<br>
+  <input type="radio" name="extraActivity" value="30"> Swimming Pool (+€30)<br>
+  <input type="radio" name="extraActivity" value="40"> Theater (+€40)<br><br>
+
+  <button onclick="calculateFee()">Calculate Fee</button>
+  <button onclick="submitRegistration()">Register</button>
+
+  <div id="fee-output" class="status-msg"></div>
+  <div id="registration-output" class="status-msg"></div>
+</fieldset>
+
+<script>
+    // DOM Selectors
+    const childrenInput = document.getElementById("children");
+    const under6Input = document.getElementById("under6");
+    const weeksInput = document.getElementById("weeks");
+    
+    // Global State Variables
+    let totalFee = 0;
+    let summaryText = "";
+
+    function getSelectedRadioValue(name) {
+        const elements = document.getElementsByName(name);
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i].checked) {
+                return {
+                    value: parseFloat(elements[i].value),
+                    text: elements[i].nextSibling.textContent.trim()
+                };
+            }
+        }
+        return { value: 0, text: "" };
+    }
+
+    function calculateFee() {
+        const numChildren = parseInt(childrenInput.value);
+        const numUnder6 = parseInt(under6Input.value);
+        const numWeeks = parseInt(weeksInput.value);
+        const feeDisplay = document.getElementById("fee-output");
+
+        feeDisplay.style.display = "block";
+
+        // Input Validation
+        if (isNaN(numChildren) || isNaN(numUnder6) || isNaN(numWeeks) || childrenInput.value === "" || under6Input.value === "" || weeksInput.value === "") {
+            feeDisplay.innerHTML = "Error: Please enter valid numerical values in all required fields.";
+            feeDisplay.style.background = "#ffcccc";
+            feeDisplay.style.color = "#cc0000";
+            return false;
+        }
+
+        if (numChildren < numUnder6 || numChildren <= 0 || numWeeks <= 0 || numUnder6 < 0) {
+            feeDisplay.innerHTML = "Error: Input validation failed (e.g., Under 6 count exceeds total children, or negative values entered).";
+            feeDisplay.style.background = "#ffcccc";
+            feeDisplay.style.color = "#cc0000";
+            return false;
+        }
+
+        // Retrieve pricing from selected options
+        const packageSelected = getSelectedRadioValue("packageOption");
+        const cateringSelected = getSelectedRadioValue("catering");
+        const extraSelected = getSelectedRadioValue("extraActivity");
+
+        const standardUnitRate = packageSelected.value + cateringSelected.value + extraSelected.value;
+
+        // Fee calculation applying a 75% discount (pays 25%) for under 6
+        const standardChildrenCount = numChildren - numUnder6;
+        totalFee = (standardChildrenCount * standardUnitRate * numWeeks) + (numUnder6 * standardUnitRate * numWeeks * 0.25);
+
+        feeDisplay.innerHTML = `Total registration fee: €${totalFee.toFixed(2)}`;
+        feeDisplay.style.background = "#d4edda";
+        feeDisplay.style.color = "#155724";
+
+        // Save selection summary for the registration function
+        summaryText = `Selected: ${packageSelected.text}, ${cateringSelected.text}, ${extraSelected.text} for ${numChildren} child(ren).`;
+        return true;
+    }
+
+    function submitRegistration() {
+        const registrationDisplay = document.getElementById("registration-output");
+        
+        // Force calculation first to ensure state validation
+        if (!calculateFee()) return;
+
+        const parentName = prompt("Enter the full name of the registering parent/guardian:");
+        if (!parentName || parentName.trim() === "") {
+            alert("Parent/guardian name is required to complete registration.");
+            return;
+        }
+
+        registrationDisplay.style.display = "block";
+        registrationDisplay.innerHTML = `
+            <strong>Registration Confirmed!</strong><br>
+            ${summaryText}<br>
+            Account Holder: ${parentName}<br>
+            <strong>Final Total Fee: €${totalFee.toFixed(2)}</strong>
+        `;
+        registrationDisplay.style.background = "#fff3cd";
+        registrationDisplay.style.color = "#856404";
+    }
+</script>
+</body>
+</html>
